@@ -16,10 +16,10 @@ This branch adds an authenticated, read-only Model Context Protocol (MCP) server
 | `get_aor_overview` | Aggregate judgment counts, exam date, daily/weekly targets and due count |
 | `list_due_aor_reviews` | Case name, citation and limited revision metadata; no personal notes or case facts |
 | `get_hyrox_progress` | Events, recent session summaries and station personal bests |
-| `get_fitness_summary` | Activity, workout summaries and latest weight/waist measurements |
+| `get_fitness_summary` | Daily activity and recovery metrics only (workout and weight tables are withheld pending RLS policy verification) |
 | `get_nutrition_summary` | Daily calorie and macro totals; no individual food entries |
 
-There are deliberately no tools for legal matters, legal documents, diary entries, account deletion, data export, or writing to the database.
+The `daily_nutrition` and `hyrox_station_pbs` views are filtered explicitly by the authenticated user ID. Base tables with RLS enabled but no policies in the supplied policy export (including `profiles`, `workouts`, and `weight_records`) are not queried. There are deliberately no tools for legal matters, legal documents, diary entries, account deletion, data export, or writing to the database.
 
 ## Security model
 
