@@ -169,14 +169,12 @@ Deno.serve(
             inputSchema: {
               as_of: dateSchema,
               activity_days: z.number().int().min(1).max(14).default(7),
-              workout_days: z.number().int().min(1).max(30).default(14),
             },
             annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
           },
-          async ({ as_of, activity_days, workout_days }) => {
+          async ({ as_of, activity_days }) => {
             const day = as_of ?? indiaToday();
             const activityFrom = daysBefore(day, activity_days - 1);
-            const workoutFrom = daysBefore(day, workout_days - 1);
             const [activityResult] = await Promise.all([
               supabase
                 .from("daily_activity")
