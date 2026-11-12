@@ -4,7 +4,7 @@ This branch adds an authenticated, read-only Model Context Protocol (MCP) server
 
 ## What is included
 
-- `supabase/functions/mcp/index.ts`: stateless Streamable HTTP MCP endpoint.
+- `supabase/functions/mcp/index.ts`: stateless Streamable HTTP MCP endpoint. It creates a fresh MCP server and transport per request and disables transport session IDs (`sessionIdGenerator: undefined`), which is required for this per-request Edge Function lifecycle.
 - `supabase/config.toml`: disables the Edge Function gateway's legacy JWT check so the MCP OAuth middleware can return its discovery challenge; enables Supabase OAuth 2.1 and dynamic client registration.
 - `src/app/oauth/consent/page.tsx`: explicit consent screen hosted by AMAN OS.
 - Login continuation support so an unauthenticated user returns to the consent screen after signing in.
