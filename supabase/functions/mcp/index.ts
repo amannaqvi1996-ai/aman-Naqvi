@@ -236,7 +236,7 @@ Deno.serve(
           },
         );
 
-      });
+      }
 
       const transport = new WebStandardStreamableHTTPServerTransport();
       await server.connect(transport);
