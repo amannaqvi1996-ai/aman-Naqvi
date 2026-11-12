@@ -45,9 +45,10 @@ Prerequisites: Node.js 20+, Supabase CLI 2.117.0+, and Deno. From the repository
 ```bash
 supabase login
 supabase link --project-ref YOUR_SUPABASE_PROJECT_REF
-supabase config push
 supabase functions deploy mcp
 ```
+
+For a hosted Supabase project, enable OAuth 2.1, dynamic client registration, and the authorization path in **Dashboard → Authentication → OAuth Server**. Do not rely on `supabase config push` to apply these hosted OAuth Server settings; the TOML section is useful for local development, while the hosted settings must be verified in the Dashboard.
 
 The endpoint will be:
 
