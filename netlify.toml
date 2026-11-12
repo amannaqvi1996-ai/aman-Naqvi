@@ -1,0 +1,15 @@
+# Netlify build settings for AMAN OS (Next.js, server-rendered API routes).
+# The Next.js runtime plugin turns the `.next` build output into a working site
+# (pages, static assets, /public files and the /api/nutrition/analyze function).
+# Without it, Netlify uploads `.next` as raw files and every page returns 404.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
