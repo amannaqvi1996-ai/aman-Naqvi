@@ -1,0 +1,12 @@
+# AMAN OS Supabase project configuration.
+# Link this folder to your existing project with: supabase link --project-ref <project-ref>
+
+[functions.mcp]
+# The function implements OAuth protected-resource discovery and verifies
+# Supabase user access tokens itself through @supabase/server.
+verify_jwt = false
+
+[auth.oauth_server]
+enabled = true
+authorization_url_path = "/oauth/consent"
+allow_dynamic_registration = true
