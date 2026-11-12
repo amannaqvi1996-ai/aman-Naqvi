@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0b0b0c;
+  --color-surface: #141416;
+  --color-surface-2: #1c1c1f;
+  --color-surface-3: #26262a;
+  --color-line: #2a2a2f;
+  --color-line-soft: #1f1f23;
+  --color-ink: #f2f2f4;
+  --color-ink-2: #a1a1aa;
+  --color-ink-3: #6b6b74;
+  --color-accent: #b5d86a;
+  --color-accent-dim: #8faf4c;
+  --color-accent-ink: #11140a;
+  --color-warn: #f0b85a;
+  --color-danger: #f2685f;
+  --color-info: #7ab8f5;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Segoe UI", Roboto, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --radius-card: 18px;
+}
+
+:root { color-scheme: dark; }
+
+html, body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+body { overflow-x: hidden; }
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* iOS: inputs below 16px trigger zoom */
+input, select, textarea { font-size: 16px; }
+@media (min-width: 768px) { input, select, textarea { font-size: 14px; } }
+
+input[type="date"], input[type="time"], input[type="datetime-local"] { color-scheme: dark; min-height: 44px; }
+
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.pb-tabbar { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+@media (min-width: 1024px) { .pb-tabbar { padding-bottom: 48px; } }
+
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { scrollbar-width: none; }
+
+@keyframes sheet-in { from { transform: translateY(24px); opacity: 0 } to { transform: none; opacity: 1 } }
+@keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+.anim-sheet { animation: sheet-in .22s cubic-bezier(.2,.8,.2,1); }
+.anim-fade { animation: fade-in .18s ease-out; }
+@media (prefers-reduced-motion: reduce) { .anim-sheet, .anim-fade { animation: none; } }
+
+.recharts-cartesian-axis-tick-value { fill: var(--color-ink-3); font-size: 11px; }
+.recharts-tooltip-wrapper { outline: none; }
