@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-import { createMcpHandler, McpServer } from "npm:@modelcontextprotocol/server@^2.0.0";
+import { McpServer } from "npm:@modelcontextprotocol/sdk@1.25.3/server/mcp.js";
+import { WebStandardStreamableHTTPServerTransport } from "npm:@modelcontextprotocol/sdk@1.25.3/server/webStandardStreamableHttp.js";
 import { pipeline } from "npm:@supabase/middleware@1";
 import { withOAuthProtectedResource, withSupabase } from "npm:@supabase/server@1";
 import { z } from "npm:zod@^4.3.6";
@@ -41,8 +42,7 @@ Deno.serve(
       withSupabase({ auth: "user" }),
     ],
     async (req, { supabase }) => {
-      const handler = createMcpHandler(() => {
-        const server = new McpServer({
+      const server = new McpServer({
           name: "AMAN OS",
           version: "1.0.0",
         });
@@ -53,7 +53,7 @@ Deno.serve(
             title: "AOR study overview",
             description:
               "Read the signed-in user's AOR judgment progress and revision counts. Returns aggregate counts only, not judgment notes or legal documents.",
-            inputSchema: z.object({ as_of: dateSchema }),
+            inputSchema: { as_of: dateSchema },
             annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
           },
           async ({ as_of }) => {
@@ -101,10 +101,10 @@ Deno.serve(
             title: "List AOR revisions due",
             description:
               "List AOR judgments due for review. Returns case title, citation and study metadata only; it deliberately excludes personal notes, facts, legal documents and diary content.",
-            inputSchema: z.object({
+            inputSchema: {
               as_of: dateSchema,
               limit: z.number().int().min(1).max(50).default(20),
-            }),
+            },
             annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
           },
           async ({ as_of, limit }) => {
@@ -126,9 +126,9 @@ Deno.serve(
             title: "HYROX training progress",
             description:
               "Read upcoming HYROX event information and recent training-session summaries. Session notes and unrelated personal records are not returned.",
-            inputSchema: z.object({
+            inputSchema: {
               recent_sessions: z.number().int().min(1).max(20).default(10),
-            }),
+            },
             annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
           },
           async ({ recent_sessions }) => {
@@ -166,11 +166,11 @@ Deno.serve(
             title: "Fitness and activity summary",
             description:
               "Read recent activity, workout summaries and the latest weight measurements for the signed-in user. Does not return raw Garmin files or private workout notes.",
-            inputSchema: z.object({
+            inputSchema: {
               as_of: dateSchema,
               activity_days: z.number().int().min(1).max(14).default(7),
               workout_days: z.number().int().min(1).max(30).default(14),
-            }),
+            },
             annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
           },
           async ({ as_of, activity_days, workout_days }) => {
@@ -215,10 +215,10 @@ Deno.serve(
             title: "Nutrition summary",
             description:
               "Read daily calorie and macronutrient totals for the signed-in user over a limited date range. Does not expose individual food diary entries.",
-            inputSchema: z.object({
+            inputSchema: {
               as_of: dateSchema,
               days: z.number().int().min(1).max(14).default(7),
-            }),
+            },
             annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
           },
           async ({ as_of, days }) => {
@@ -236,10 +236,11 @@ Deno.serve(
           },
         );
 
-        return server;
       });
 
-      return handler.fetch(req);
+      const transport = new WebStandardStreamableHTTPServerTransport();
+      await server.connect(transport);
+      return transport.handleRequest(req);
     },
   ),
 );
