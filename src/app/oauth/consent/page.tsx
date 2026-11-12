@@ -64,8 +64,8 @@ export default function OAuthConsentPage() {
     try {
       const result =
         decision === "approve"
-          ? await supabase.auth.oauth.approveAuthorization(authorizationId)
-          : await supabase.auth.oauth.denyAuthorization(authorizationId);
+          ? await supabase.auth.oauth.approveAuthorization(authorizationId, { skipBrowserRedirect: true })
+          : await supabase.auth.oauth.denyAuthorization(authorizationId, { skipBrowserRedirect: true });
       if (result.error) throw result.error;
       window.location.assign(result.data.redirect_url);
     } catch (err) {
