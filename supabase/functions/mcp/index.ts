@@ -225,7 +225,11 @@ Deno.serve(
 
       }
 
-      const transport = new WebStandardStreamableHTTPServerTransport();
+      const transport = new WebStandardStreamableHTTPServerTransport({
+        // This Edge Function creates a fresh MCP server and transport per request.
+        // Stateless mode avoids issuing session IDs that cannot be resumed by a new instance.
+        sessionIdGenerator: undefined,
+      });
       await server.connect(transport);
       return transport.handleRequest(req);
     },
