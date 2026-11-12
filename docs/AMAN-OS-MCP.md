@@ -13,7 +13,7 @@ This branch adds an authenticated, read-only Model Context Protocol (MCP) server
 
 | Tool | Data returned |
 |---|---|
-| `get_aor_overview` | Aggregate judgment counts, exam date, daily/weekly targets and due count |
+| `get_aor_overview` | Aggregate judgment counts, status breakdown, due count and difficult-case count |
 | `list_due_aor_reviews` | Case name, citation and limited revision metadata; no personal notes or case facts |
 | `get_hyrox_progress` | Events, recent session summaries and station personal bests |
 | `get_fitness_summary` | Daily activity and recovery metrics only (workout and weight tables are withheld pending RLS policy verification) |
