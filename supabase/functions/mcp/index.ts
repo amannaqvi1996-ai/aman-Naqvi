@@ -58,9 +58,8 @@ Deno.serve(
           },
           async ({ as_of }) => {
             const day = as_of ?? indiaToday();
-            const [profileResult, totalResult, notStartedResult, readingResult, firstReadResult, firstRevisionResult, secondRevisionResult, recallResult, dueResult, difficultResult] =
+            const [totalResult, notStartedResult, readingResult, firstReadResult, firstRevisionResult, secondRevisionResult, recallResult, dueResult, difficultResult] =
               await Promise.all([
-                supabase.from("profiles").select("aor_exam_date,aor_daily_target_judgments,aor_weekly_target_judgments").maybeSingle(),
                 supabase.from("judgments").select("id", { count: "exact", head: true }),
                 supabase.from("judgments").select("id", { count: "exact", head: true }).eq("status", "not_started"),
                 supabase.from("judgments").select("id", { count: "exact", head: true }).eq("status", "reading"),
@@ -72,14 +71,11 @@ Deno.serve(
                 supabase.from("judgments").select("id", { count: "exact", head: true }).eq("is_difficult", true),
               ]);
 
-            const results = [profileResult, totalResult, notStartedResult, readingResult, firstReadResult, firstRevisionResult, secondRevisionResult, recallResult, dueResult, difficultResult];
+            const results = [totalResult, notStartedResult, readingResult, firstReadResult, firstRevisionResult, secondRevisionResult, recallResult, dueResult, difficultResult];
             for (const result of results) failOnError(result.error);
 
             return jsonResult({
               as_of: day,
-              exam_date: profileResult.data?.aor_exam_date ?? null,
-              daily_target: profileResult.data?.aor_daily_target_judgments ?? null,
-              weekly_target: profileResult.data?.aor_weekly_target_judgments ?? null,
               total_judgments: totalResult.count ?? 0,
               by_status: {
                 not_started: notStartedResult.count ?? 0,
@@ -132,6 +128,9 @@ Deno.serve(
             annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
           },
           async ({ recent_sessions }) => {
+            const { data: authData, error: authError } = await supabase.auth.getUser();
+            failOnError(authError);
+            if (!authData.user) throw new Error("not authenticated");
             const [eventsResult, sessionsResult, personalBestsResult] = await Promise.all([
               supabase
                 .from("hyrox_events")
@@ -146,6 +145,7 @@ Deno.serve(
               supabase
                 .from("hyrox_station_pbs")
                 .select("station,time_seconds,weight_kg,performed_on")
+                .eq("user_id", authData.user.id)
                 .order("performed_on", { ascending: false })
                 .limit(12),
             ]);
@@ -165,7 +165,7 @@ Deno.serve(
           {
             title: "Fitness and activity summary",
             description:
-              "Read recent activity, workout summaries and the latest weight measurements for the signed-in user. Does not return raw Garmin files or private workout notes.",
+              "Read recent daily activity and recovery metrics for the signed-in user. Workout and body-measurement tables are not exposed until their RLS policies are verified.",
             inputSchema: {
               as_of: dateSchema,
               activity_days: z.number().int().min(1).max(14).default(7),
@@ -177,7 +177,7 @@ Deno.serve(
             const day = as_of ?? indiaToday();
             const activityFrom = daysBefore(day, activity_days - 1);
             const workoutFrom = daysBefore(day, workout_days - 1);
-            const [activityResult, workoutsResult, weightResult] = await Promise.all([
+            const [activityResult] = await Promise.all([
               supabase
                 .from("daily_activity")
                 .select("day,steps,active_kcal,resting_hr,sleep_minutes,sleep_score,hrv_ms,body_battery,training_readiness,stress_avg")
@@ -185,26 +185,11 @@ Deno.serve(
                 .lte("day", day)
                 .order("day", { ascending: true })
                 .limit(30),
-              supabase
-                .from("workouts")
-                .select("type,title,started_at,duration_seconds,distance_m,avg_pace_s_per_km,avg_hr,calories_kcal,elevation_gain_m,rpe")
-                .gte("started_at", `${workoutFrom}T00:00:00.000Z`)
-                .order("started_at", { ascending: false })
-                .limit(50),
-              supabase
-                .from("weight_records")
-                .select("measured_on,weight_kg,waist_cm")
-                .order("measured_on", { ascending: false })
-                .limit(5),
             ]);
             failOnError(activityResult.error);
-            failOnError(workoutsResult.error);
-            failOnError(weightResult.error);
             return jsonResult({
               as_of: day,
               activity: activityResult.data ?? [],
-              workouts: workoutsResult.data ?? [],
-              latest_body_measurements: weightResult.data ?? [],
             });
           },
         );
@@ -224,9 +209,13 @@ Deno.serve(
           async ({ as_of, days }) => {
             const day = as_of ?? indiaToday();
             const from = daysBefore(day, days - 1);
+            const { data: authData, error: authError } = await supabase.auth.getUser();
+            failOnError(authError);
+            if (!authData.user) throw new Error("not authenticated");
             const { data, error } = await supabase
               .from("daily_nutrition")
               .select("day,calories_kcal,protein_g,carbs_g,fat_g,calorie_target_kcal,protein_target_g,calories_remaining")
+              .eq("user_id", authData.user.id)
               .gte("day", from)
               .lte("day", day)
               .order("day", { ascending: true })
