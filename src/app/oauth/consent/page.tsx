@@ -102,7 +102,7 @@ export default function OAuthConsentPage() {
               <ul className="mt-3 space-y-2 text-sm text-ink-2">
                 <li>• AOR study progress and due-review case metadata</li>
                 <li>• HYROX events, training sessions and station bests</li>
-                <li>• Fitness activity and body-measurement summaries</li>
+                <li>• Daily activity and recovery metrics</li>
                 <li>• Daily nutrition totals (not individual food entries)</li>
               </ul>
               <p className="mt-3 text-xs text-ink-3">Legal matters, document contents and diary entries are not included in the MCP tools.</p>
