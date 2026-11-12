@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Star } from "lucide-react";
+import { Plus, Star, Sparkles } from "lucide-react";
 import { supabase, errMsg } from "@/lib/supabase";
 import { toLocalInput, fromLocalInput } from "@/lib/format";
 import { Button, Field, Input, Select, Sheet, Segmented, useToast, cx } from "@/components/ui";
@@ -28,6 +28,9 @@ export function FoodSheet({ open, onClose, onSaved, entry, defaultDate }: { open
   const [f, setF] = useState({ meal: defaultMeal() as Meal, food_name: "", portion: "1 serving", calories_kcal: "", protein_g: "", carbs_g: "", fat_g: "", confidence: "estimated" as "estimated" | "verified", when: toLocalInput(), saveToLibrary: false, mult: "1" });
   const [base, setBase] = useState<Food | null>(null);
   const [busy, setBusy] = useState(false);
+  const [aiText, setAiText] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiBreakdown, setAiBreakdown] = useState<{ items: { name: string; portion: string; calories_kcal: number; protein_g: number; carbs_g: number; fat_g: number }[]; notes: string[] } | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -38,7 +41,7 @@ export function FoodSheet({ open, onClose, onSaved, entry, defaultDate }: { open
       const when = defaultDate ? `${defaultDate}T${toLocalInput().slice(11)}` : toLocalInput();
       setF((x) => ({ ...x, meal: defaultMeal(), food_name: "", portion: "1 serving", calories_kcal: "", protein_g: "", carbs_g: "", fat_g: "", confidence: "estimated", when, saveToLibrary: false, mult: "1" }));
     }
-    setBase(null); setQ("");
+    setBase(null); setQ(""); setAiText(""); setAiBreakdown(null);
   }, [open, entry, defaultDate]);
 
   const matches = useMemo(() => {
@@ -57,6 +60,29 @@ export function FoodSheet({ open, onClose, onSaved, entry, defaultDate }: { open
       const r = (v: number) => String(Math.round(v * k * 10) / 10);
       return { ...x, mult: m, portion: k === 1 ? base.portion_label : `${k} × ${base.portion_label}`, calories_kcal: r(base.calories_kcal), protein_g: r(base.protein_g), carbs_g: r(base.carbs_g), fat_g: r(base.fat_g) };
     });
+  }
+
+  async function analyzeFood() {
+    const description = aiText.trim();
+    if (!description) return toast("Describe the food and quantities first", "err");
+    setAiBusy(true);
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Please sign in again before using AI nutrition.");
+      const response = await fetch("/api/nutrition/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ description }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not analyse this meal.");
+      setF((x) => ({ ...x, food_name: result.food_name, portion: result.portion, calories_kcal: String(result.totals.calories_kcal), protein_g: String(result.totals.protein_g), carbs_g: String(result.totals.carbs_g), fat_g: String(result.totals.fat_g), confidence: "estimated" }));
+      setBase(null);
+      setAiBreakdown({ items: result.items, notes: result.notes ?? [] });
+      toast("Nutrition estimate ready — review it before logging.");
+    } catch (err) { toast(errMsg(err), "err"); } finally { setAiBusy(false); }
   }
 
   async function save(e: React.FormEvent) {
@@ -96,6 +122,18 @@ export function FoodSheet({ open, onClose, onSaved, entry, defaultDate }: { open
             </div>
           </div>
         )}
+        {!entry && <div className="rounded-xl border border-accent/30 bg-surface-2 p-3 space-y-3">
+          <div className="flex items-center gap-2 font-semibold"><Sparkles className="size-4 text-accent" />AI meal analysis</div>
+          <p className="text-xs text-ink-3">Describe everything you ate, including quantities and cooking method. Example: 2 homemade rotis, 150 g chicken shami kebab, 100 g cooked rice.</p>
+          <textarea value={aiText} onChange={(e) => setAiText(e.target.value)} rows={3} maxLength={1200} placeholder="Describe your meal in ordinary language…" className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent" />
+          <Button type="button" variant="secondary" onClick={analyzeFood} loading={aiBusy}><Sparkles className="size-4" />Analyse meal</Button>
+          {aiBreakdown && <div className="rounded-lg bg-surface p-3 space-y-2">
+            <div className="text-sm font-semibold">AI estimate by item</div>
+            {aiBreakdown.items.map((item, index) => <div key={`${item.name}-${index}`} className="flex justify-between gap-3 text-xs"><span className="text-ink-2">{item.name} <span className="text-ink-3">· {item.portion}</span></span><span className="shrink-0 tabular">{Math.round(item.calories_kcal)} kcal</span></div>)}
+            {aiBreakdown.notes.map((note, index) => <p key={index} className="text-xs text-ink-3">{note}</p>)}
+            <p className="text-xs text-ink-3">Check the totals below and adjust them if needed before logging. AI values are estimates, not laboratory measurements.</p>
+          </div>}
+        </div>}
         <Segmented value={f.meal} onChange={(v) => setF({ ...f, meal: v })} options={MEALS.map((m) => ({ value: m.value, label: m.label }))} />
         <Field label="Food"><Input required value={f.food_name} onChange={(e) => { setF({ ...f, food_name: e.target.value }); setBase(null); }} placeholder="e.g. Paneer bhurji" /></Field>
         <div className="grid grid-cols-2 gap-3">
