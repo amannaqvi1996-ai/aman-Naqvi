@@ -1,3 +1,5 @@
+/// <reference lib="deno.ns" />
+
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 import { McpServer } from "npm:@modelcontextprotocol/sdk@1.25.3/server/mcp.js";
