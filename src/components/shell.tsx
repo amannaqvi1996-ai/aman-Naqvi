@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { Home, Scale, Weight, Flame, Utensils, BookOpenText, NotebookPen, BarChart3, Settings, MoreHorizontal, Watch } from "lucide-react";
+import { Home, Scale, Weight, Flame, Utensils, BookOpenText, NotebookPen, BarChart3, Settings, MoreHorizontal, Watch, Library } from "lucide-react";
 import { useAuth } from "./auth";
 import { useSyncState } from "@/lib/hooks";
 import { cx, Sheet, Spinner } from "./ui";
@@ -15,6 +15,7 @@ export const NAV = [
   { href: "/fitness/", label: "Fitness & Garmin", icon: Watch },
   { href: "/body/", label: "Weight", icon: Weight },
   { href: "/diary/", label: "Diary", icon: NotebookPen },
+  { href: "/watchlist/", label: "Books & Movies", icon: Library },
   { href: "/analytics/", label: "Analytics", icon: BarChart3 },
   { href: "/settings/", label: "Settings", icon: Settings },
 ];
