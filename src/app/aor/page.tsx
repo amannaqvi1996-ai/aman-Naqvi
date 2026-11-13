@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Papa from "papaparse";
-import { Plus, Play, Square, Upload, Search, AlertTriangle, CalendarClock, Trash2, Download } from "lucide-react";
+import { Plus, Play, Square, Upload, Search, AlertTriangle, CalendarClock, Trash2, Download, X } from "lucide-react";
 import { supabase, errMsg } from "@/lib/supabase";
 import { useLive, must } from "@/lib/hooks";
 import { dayKey, addDays, fmtDay, num, weekStart, dayStartISO } from "@/lib/format";
@@ -41,7 +41,7 @@ export default function AorPage() {
           {tab === "plan" && <Plan {...data} onOpen={open} reload={reload} />}
           {tab === "checklist" && <Checklist subjects={data.subjects} judgments={data.judgments} reload={reload} />}
           {tab === "judgments" && <JudgmentList {...data} onOpen={open} />}
-          {tab === "calendar" && <Calendar judgments={data.judgments} onOpen={open} />}
+          {tab === "calendar" && <Calendar judgments={data.judgments} onOpen={open} reload={reload} />}
           {tab === "mocks" && <Mocks subjects={data.subjects} />}
           {tab === "import" && <Import subjects={data.subjects} judgments={data.judgments} onDone={() => { reload(); setTab("judgments"); }} />}
         </>
@@ -233,25 +233,47 @@ function StatusPill({ s }: { s: Judgment["status"] }) {
 }
 
 // ---------------- Revision calendar ----------------
-function Calendar({ judgments, onOpen }: { judgments: Judgment[]; onOpen: (j: Judgment) => void }) {
+function Calendar({ judgments, onOpen, reload }: { judgments: Judgment[]; onOpen: (j: Judgment) => void; reload: () => void }) {
+  const toast = useToast();
   const today = dayKey();
-  const days = Array.from({ length: 14 }, (_, i) => addDays(today, i));
+  const [span, setSpan] = useState(14);
+  const days = Array.from({ length: span }, (_, i) => addDays(today, i));
   const overdue = judgments.filter((j) => j.next_review_date && j.next_review_date < today);
+  const unscheduled = judgments.filter((j) => !j.next_review_date).sort((a, b) => a.case_name.localeCompare(b.case_name));
+  async function setDate(j: Judgment, d: string | null) {
+    const { error } = await supabase.from("judgments").update({ next_review_date: d }).eq("id", j.id);
+    if (error) toast(errMsg(error), "err"); else reload();
+  }
+  const row = (j: Judgment, tone?: "warn") => (
+    <div key={j.id} className="flex items-center gap-2 px-4 py-2 border-t border-line-soft first:border-t-0">
+      <button onClick={() => onOpen(j)} className={cx("flex-1 min-w-0 text-left text-sm truncate hover:text-accent", tone === "warn" && "text-warn")}>{j.case_name}</button>
+      <input type="date" aria-label="Move to date" value={j.next_review_date ?? ""} onChange={(e) => e.target.value && setDate(j, e.target.value)} className="h-8 rounded-lg bg-surface-2 border border-line-soft px-2 text-xs text-ink-2" />
+      <button onClick={() => setDate(j, null)} aria-label="Remove from calendar" title="Remove from calendar" className="size-8 grid place-items-center rounded-lg text-ink-3 hover:text-danger hover:bg-surface-2"><X className="size-4" /></button>
+    </div>
+  );
   return (
     <div className="grid gap-3 lg:grid-cols-2">
+      <p className="text-xs text-ink-3 lg:col-span-2">Pick a date on any judgment to move it, × to take it off the calendar, or add one to a day. Ticking Read in the Checklist schedules Revision 1 a week later; ticking Revision 1 schedules Revision 2 three weeks later.</p>
       {overdue.length > 0 && (
         <Card title={`Overdue (${overdue.length})`} pad={false} className="lg:col-span-2">
-          {overdue.map((j) => <ListRow key={j.id} onClick={() => onOpen(j)} right={<Badge tone="warn">{fmtDay(j.next_review_date!)}</Badge>}><span className="font-medium">{j.case_name}</span></ListRow>)}
+          {overdue.map((j) => row(j, "warn"))}
         </Card>
       )}
       {days.map((d) => {
         const js = judgments.filter((j) => j.next_review_date === d);
         return (
           <Card key={d} pad={false} title={<span className="flex items-center gap-2"><CalendarClock className="size-4" />{d === today ? "Today" : fmtDay(d, { weekday: "short", day: "numeric", month: "short" })}</span>} action={<span className="text-xs text-ink-3">{js.length}</span>}>
-            {js.length ? js.map((j) => <ListRow key={j.id} onClick={() => onOpen(j)}><span className="text-sm">{j.case_name}</span></ListRow>) : <p className="px-4 pb-3 text-sm text-ink-3">Nothing scheduled</p>}
+            {js.map((j) => row(j))}
+            <div className="px-4 py-2 border-t border-line-soft">
+              <select value="" onChange={(e) => { const j = judgments.find((x) => x.id === e.target.value); if (j) setDate(j, d); }} className="w-full h-9 rounded-lg bg-surface-2 border border-line-soft px-2 text-sm text-ink-2" aria-label="Add a judgment to this day">
+                <option value="">+ Add judgment to this day</option>
+                {unscheduled.map((j) => <option key={j.id} value={j.id}>{j.case_name}</option>)}
+              </select>
+            </div>
           </Card>
         );
       })}
+      <Button variant="secondary" className="lg:col-span-2" onClick={() => setSpan(span + 14)}>Show 2 more weeks</Button>
     </div>
   );
 }
