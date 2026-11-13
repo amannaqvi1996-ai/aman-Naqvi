@@ -1,5 +1,4 @@
 // Supreme Court AOR exam — List of Leading Cases (official compilation index).
-// Nos. 23–35 still to be added.
 export const LEADING_CASES: { no: number; case_name: string; citation: string }[] = [
   { no: 1, case_name: "His Holiness Kesavananda Bharati Sripadagalavaru v. State of Kerala", citation: "[1973] Supp. SCR 1" },
   { no: 2, case_name: "Maneka Gandhi v. Union of India", citation: "[1978] 2 SCR 621" },
@@ -23,6 +22,19 @@ export const LEADING_CASES: { no: number; case_name: string; citation: string }[
   { no: 20, case_name: "Technip SA v. SMS Holding (Pvt.) Ltd. and Ors.", citation: "[2005] Supp. 1 SCR 223" },
   { no: 21, case_name: "M/S. S.B.P. and Co. v. M/S. Patel Engineering Ltd. and Anr.", citation: "[2005] Supp. 4 SCR 688" },
   { no: 22, case_name: "Rameshwar Prasad and Ors. v. Union of India and Anr.", citation: "[2006] 1 SCR 562" },
+  { no: 23, case_name: "I.R. Coelho (Dead) By LRs. v. State of Tamil Nadu", citation: "[2007] 1 SCR 706" },
+  { no: 24, case_name: "Common Cause (A Regd. Society) v. Union of India & Ors.", citation: "[2008] 6 SCR 262" },
+  { no: 25, case_name: "State of West Bengal & Ors. v. The Committee for Protection of Democratic Rights, West Bengal & Ors.", citation: "[2010] 2 SCR 979" },
+  { no: 26, case_name: "Smt. Selvi & Ors. v. State of Karnataka", citation: "[2010] 5 SCR 381" },
+  { no: 27, case_name: "Re: Special Reference No. 1 of 2012 [Under Article 143(1) of the Constitution of India]", citation: "[2012] 9 SCR 311" },
+  { no: 28, case_name: "Republic of Italy and Ors. v. Union of India and Ors.", citation: "[2013] 4 SCR 595" },
+  { no: 29, case_name: "Novartis AG v. Union of India & Others", citation: "[2013] 13 SCR 148" },
+  { no: 30, case_name: "Dr. Balram Prasad v. Dr. Kunal Saha & Ors.", citation: "[2013] 12 SCR 30" },
+  { no: 31, case_name: "Lalita Kumari v. Govt. of U.P. and Ors.", citation: "[2013] 14 SCR 713" },
+  { no: 32, case_name: "National Legal Services Authority v. Union of India and Others", citation: "[2014] 5 SCR 119" },
+  { no: 33, case_name: "Pramati Educational & Cultural Trust (R) & Ors. v. Union of India & Ors.", citation: "[2014] 11 SCR 712" },
+  { no: 34, case_name: "M/s. Kailash Nath Associates v. Delhi Development Authority & Anr.", citation: "[2015] 1 SCR 627" },
+  { no: 35, case_name: "Shreya Singhal v. Union of India", citation: "[2015] 5 SCR 963" },
   { no: 36, case_name: "Supreme Court Advocates-on-Record Association and Another v. Union of India", citation: "[2015] 13 SCR 1" },
   { no: 37, case_name: "Union of India v. V. Sriharan @ Murugan & Ors.", citation: "[2015] 14 SCR 613" },
   { no: 38, case_name: "Gujarat Urja Vikas Nigam Limited v. EMCO Limited & Others", citation: "[2016] 1 SCR 857" },
