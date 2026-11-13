@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { Check, Search, ListPlus } from "lucide-react";
 import { supabase, errMsg } from "@/lib/supabase";
-import { dayKey } from "@/lib/format";
+import { dayKey, addDays } from "@/lib/format";
 import { Card, Button, Input, Select, Textarea, Sheet, Empty, useToast, cx } from "@/components/ui";
 import { LEADING_CASES } from "./leading-cases";
 import { statusIdx, type JStatus, type Judgment, type Subject } from "./types";
@@ -54,6 +54,12 @@ export function Checklist({ subjects, judgments, reload }: { subjects: Subject[]
     // Ticking a later box also completes the earlier ones; unticking returns to the step before it.
     const status: JStatus = checked ? BEFORE[step] : STEPS[step].done;
     const row: Record<string, unknown> = { status };
+    // Keep the revision calendar in step: Read → Rev 1 in 7 days, Rev 1 → Rev 2 in 21 days.
+    const reached = statusIdx(status);
+    if (reached < STEPS[0].idx) row.next_review_date = null;
+    else if (reached === STEPS[0].idx) row.next_review_date = addDays(dayKey(), 7);
+    else if (reached === STEPS[1].idx) row.next_review_date = addDays(dayKey(), 21);
+    else if (reached >= STEPS[2].idx) row.next_review_date = null;
     if (!checked && !j.first_reading_date) row.first_reading_date = dayKey();
     setBusy(`${j.id}:${step}`);
     const { error } = await supabase.from("judgments").update(row).eq("id", j.id);
