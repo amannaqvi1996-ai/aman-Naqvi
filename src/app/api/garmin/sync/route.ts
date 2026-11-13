@@ -75,8 +75,8 @@ function dateOf(r: Json): string | null {
 
 function istDay(d: Date) { return new Date(d.getTime() + 5.5 * 3600_000).toISOString().slice(0, 10); }
 
-async function logAttempt(sb: SupabaseClient, row: Json) {
-  try { await sb.from("garmin_sync_logs").insert(row); } catch { /* logging is optional */ }
+async function logAttempt(sb: SupabaseClient, row: Json): Promise<string | null> {
+  try { const { error } = await sb.from("garmin_sync_logs").insert(row); return error ? error.message : null; } catch (e) { return (e as Error).message; }
 }
 
 export async function POST(request: NextRequest) {
@@ -92,6 +92,7 @@ export async function POST(request: NextRequest) {
   const sb = createClient(supabaseUrl, publishableKey, { auth: { persistSession: false, autoRefreshToken: false }, global: { headers: { Authorization: `Bearer ${userToken}` } } });
   const { data: authData, error: authError } = await sb.auth.getUser(userToken);
   if (authError || !authData.user) return NextResponse.json({ error: "Your session has expired. Please sign in again." }, { status: 401 });
+  const userId = authData.user.id;
 
   const body = await request.json().catch(() => ({}));
   const days = Math.min(Math.max(Number(body?.days) || 14, 1), 90);
@@ -150,14 +151,27 @@ export async function POST(request: NextRequest) {
     }
 
     // --- Daily metrics → daily_activity --------------------------------------
+    // Garmin rejects long ranges on some endpoints (sleep returns 400 for ~90 days), so fetch in 7-day windows.
+    const windows: [string, string][] = [];
+    for (let s0 = start; s0 <= end;) {
+      const e0 = istDay(new Date(Math.min(new Date(`${s0}T12:00:00Z`).getTime() + 6 * 86400_000, new Date(`${end}T12:00:00Z`).getTime())));
+      windows.push([s0, e0]);
+      s0 = istDay(new Date(new Date(`${e0}T12:00:00Z`).getTime() + 86400_000));
+    }
+    const chunked = async (what: string, f: (a: string, b: string) => Promise<unknown>) => {
+      const parts = await Promise.all(windows.map(([a, b]) => soft(f(a, b), warnings, what)));
+      return parts.flatMap((p) => records(p));
+    };
     const [summaries, sleep, hrv] = await Promise.all([
-      soft(gget(token, "/usersummary-service/v2/dailysummaries", { startDate: start, endDate: end }), warnings, "daily summaries"),
-      soft(gget(token, "/sleep-service/sleep/dailySleepSummariesByDate", { startDate: start, endDate: end }), warnings, "sleep"),
-      soft(gget(token, `/hrv-service/hrv/daily/${start}/${end}`), warnings, "HRV"),
+      chunked("daily summaries", (a, b) => gget(token, "/usersummary-service/v2/dailysummaries", { startDate: a, endDate: b })),
+      chunked("sleep", (a, b) => gget(token, "/sleep-service/sleep/dailySleepSummariesByDate", { startDate: a, endDate: b })),
+      chunked("HRV", (a, b) => gget(token, `/hrv-service/hrv/daily/${a}/${b}`)),
     ]);
+    // Keep one copy of each distinct warning.
+    const uniq = [...new Set(warnings)]; warnings.length = 0; warnings.push(...uniq);
     const byDay = new Map<string, Json>();
     const put = (d: string, k: string, v: number | null) => { if (v == null) return; const row = byDay.get(d) ?? { day: d, source: "garmin" }; row[k] = v; byDay.set(d, row); };
-    for (const r of records(summaries)) {
+    for (const r of summaries) {
       const d = dateOf(r); if (!d) continue;
       put(d, "steps", int(pick(r, ["totalSteps", "steps"])));
       put(d, "active_kcal", int(pick(r, ["activeKilocalories", "activeCalories"])));
@@ -165,13 +179,13 @@ export async function POST(request: NextRequest) {
       put(d, "body_battery", int(pick(r, ["bodyBatteryMostRecentValue", "bodyBatteryAtWakeTime", "bodyBatteryHighestValue"])));
       put(d, "training_readiness", int(pick(r, ["trainingReadinessScore", "trainingReadiness"])));
     }
-    for (const r of records(sleep)) {
+    for (const r of sleep) {
       const d = dateOf(r); if (!d) continue;
       const secs = pick(r, ["sleepTimeSeconds", "totalSleepSeconds", "sleepDurationInSeconds"]);
       put(d, "sleep_minutes", secs != null && secs > 0 ? Math.round(secs / 60) : null);
       put(d, "sleep_score", int(pick(r, ["overallSleepScore", "sleepScore", "overall"])));
     }
-    for (const r of records(hrv)) {
+    for (const r of hrv) {
       const d = dateOf(r); if (!d) continue;
       put(d, "hrv_ms", int(pick(r, ["lastNightAvg", "weeklyAvg"])));
     }
@@ -187,20 +201,26 @@ export async function POST(request: NextRequest) {
 
     const now = new Date().toISOString();
     const latest = rows.map((r) => r.started_at as string).sort().pop() ?? null;
+    const statusErrors: string[] = [];
     try {
       const conn: Json = { status: "authorised", last_successful_sync: now, last_error: warnings.length ? warnings.join(" · ").slice(0, 500) : null, ...(latest ? { last_imported_activity_at: latest } : {}) };
-      const { data: cur } = await sb.from("garmin_connections").select("id, authorised_at").maybeSingle();
-      if (cur) await sb.from("garmin_connections").update({ ...conn, authorised_at: (cur as { authorised_at?: string }).authorised_at ?? now }).eq("id", (cur as { id: string }).id);
-      else await sb.from("garmin_connections").insert({ ...conn, authorised_at: now });
-    } catch { /* status row is optional */ }
-    await logAttempt(sb, { started_at: startedAt, outcome: "success", activities_imported: imported, error: warnings.length ? warnings.join(" · ").slice(0, 500) : null });
+      const cur = await sb.from("garmin_connections").select("*").maybeSingle();
+      if (cur.error) statusErrors.push(`read: ${cur.error.message}`);
+      const w = cur.data
+        ? await sb.from("garmin_connections").update({ ...conn, authorised_at: (cur.data as Json).authorised_at ?? now }).eq("user_id", userId)
+        : await sb.from("garmin_connections").insert({ ...conn, user_id: userId, authorised_at: now });
+      if (w.error) statusErrors.push(`write: ${w.error.message}`);
+    } catch (e) { statusErrors.push((e as Error).message); }
+    const logErr = await logAttempt(sb, { user_id: userId, started_at: startedAt, outcome: "success", activities_imported: imported, error: warnings.length ? warnings.join(" · ").slice(0, 500) : null });
+    if (logErr) statusErrors.push(`log: ${logErr}`);
+    if (statusErrors.length) console.error("Garmin status/log write failed:", statusErrors.join(" | "));
 
-    return NextResponse.json({ ok: true, range: { start, end }, activities_found: rows.length, activities_imported: imported, days_saved: daysSaved, warnings });
+    return NextResponse.json({ ok: true, synced_at: now, range: { start, end }, activities_found: rows.length, activities_imported: imported, days_saved: daysSaved, warnings, status_errors: statusErrors });
   } catch (e) {
     const message = e instanceof SyncError ? e.message : (e as { message?: string })?.message ?? "Garmin sync failed.";
     console.error("Garmin sync failed:", message);
-    try { await sb.from("garmin_connections").update({ status: "error", last_error: message.slice(0, 500) }).not("id", "is", null); } catch { /* optional */ }
-    await logAttempt(sb, { started_at: startedAt, outcome: "failed", activities_imported: 0, error: message.slice(0, 500) });
+    try { await sb.from("garmin_connections").update({ status: "error", last_error: message.slice(0, 500) }).eq("user_id", userId); } catch { /* optional */ }
+    await logAttempt(sb, { user_id: userId, started_at: startedAt, outcome: "failed", activities_imported: 0, error: message.slice(0, 500) });
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }
