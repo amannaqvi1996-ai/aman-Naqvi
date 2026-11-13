@@ -33,8 +33,11 @@ export default function FitnessPage() {
   useEffect(() => {
     if (!data || autoTried.current) return;
     autoTried.current = true;
-    const last = data.conn?.last_successful_sync ? new Date(data.conn.last_successful_sync).getTime() : 0;
-    if (data.conn?.status === "authorised" && Date.now() - last > 2 * 3600_000) syncGarmin(14).then(reload).catch(() => {});
+    let local: string | null = null; try { local = localStorage.getItem("garmin_last_sync"); } catch { /* ignore */ }
+    const lastIso = data.conn?.last_successful_sync ?? local;
+    const last = lastIso ? new Date(lastIso).getTime() : 0;
+    const connected = data.conn?.status === "authorised" || !!local || data.workouts.some((w) => w.source === "garmin");
+    if (connected && Date.now() - last > 2 * 3600_000) syncGarmin(14).then(reload).catch(() => {});
   }, [data, reload]);
 
   return (
@@ -55,13 +58,14 @@ export default function FitnessPage() {
   );
 }
 
-async function syncGarmin(days: number): Promise<{ activities_imported: number; activities_found: number; days_saved: number; warnings: string[] }> {
+async function syncGarmin(days: number): Promise<{ activities_imported: number; activities_found: number; days_saved: number; warnings: string[]; synced_at?: string }> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (!token) throw new Error("Please sign in again.");
   const res = await fetch("/api/garmin/sync", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ days }) });
   const out = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(out.error || "Garmin sync failed.");
+  try { localStorage.setItem("garmin_last_sync", out.synced_at ?? new Date().toISOString()); } catch { /* storage optional */ }
   return out;
 }
 
@@ -305,13 +309,16 @@ function Garmin({ conn, logs, workouts, reload }: { conn: Conn | null; logs: Log
       reload();
     } catch (e) { toast(errMsg(e), "err"); reload(); } finally { setBusy(null); }
   }
-  const status = conn?.status ?? "pending_connection";
+  let localSync: string | null = null; try { localSync = typeof window !== "undefined" ? localStorage.getItem("garmin_last_sync") : null; } catch { /* ignore */ }
+  const hasGarminData = workouts.some((w) => w.source === "garmin");
+  const status = conn?.status ?? (localSync || hasGarminData ? "authorised" : "pending_connection");
+  const lastSync = conn?.last_successful_sync ?? localSync;
   const latestImport = workouts.find((w) => w.source !== "manual");
   const failures = logs.filter((l) => l.outcome === "failed");
   const rows: [string, React.ReactNode, React.ElementType][] = [
     ["Connection status", status === "authorised" ? <Badge tone="accent">Connected</Badge> : status === "error" ? <Badge tone="danger">Error</Badge> : status === "disconnected" ? <Badge>Disconnected</Badge> : <Badge tone="warn">Pending Connection</Badge>, Watch],
-    ["Authorisation", conn?.authorised_at ? `Authorised ${fmtDateTime(conn.authorised_at)}` : "Not authorised", ShieldCheck],
-    ["Last successful sync", conn?.last_successful_sync ? fmtDateTime(conn.last_successful_sync) : "Never", Clock],
+    ["Authorisation", conn?.authorised_at ? `Authorised ${fmtDateTime(conn.authorised_at)}` : status === "authorised" ? "Personal API key (Netlify)" : "Not authorised", ShieldCheck],
+    ["Last successful sync", lastSync ? fmtDateTime(lastSync) : "Never", Clock],
     ["Latest imported activity", latestImport ? `${label(latestImport.type)} · ${fmtDateTime(latestImport.started_at)} (${latestImport.source.replace("_import", "").toUpperCase()})` : "None yet", Upload],
     ["Sync failures", failures.length ? `${failures.length} recent` : "None", AlertTriangle],
   ];
