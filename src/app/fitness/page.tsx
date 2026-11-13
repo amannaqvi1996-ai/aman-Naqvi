@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { Plus, Upload, Trash2, Watch, Link2Off, ShieldCheck, Clock, AlertTriangle, Trophy } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Plus, Upload, Trash2, Watch, Link2Off, ShieldCheck, Clock, AlertTriangle, Trophy, RefreshCw } from "lucide-react";
 import { supabase, errMsg } from "@/lib/supabase";
 import { useLive, must } from "@/lib/hooks";
 import { dayKey, addDays, fmtDay, fmtDuration, parseDuration, num, fmtPace, weekStart, toLocalInput, fromLocalInput, fmtDateTime } from "@/lib/format";
@@ -29,6 +29,13 @@ export default function FitnessPage() {
     ]);
     return { workouts: workouts as Workout[], days: days as Day[], conn: conn as Conn | null, logs: logs as Log[] };
   }, ["workouts", "daily_activity", "garmin_connections", "garmin_sync_logs"]);
+  const autoTried = useRef(false);
+  useEffect(() => {
+    if (!data || autoTried.current) return;
+    autoTried.current = true;
+    const last = data.conn?.last_successful_sync ? new Date(data.conn.last_successful_sync).getTime() : 0;
+    if (data.conn?.status === "authorised" && Date.now() - last > 2 * 3600_000) syncGarmin(14).then(reload).catch(() => {});
+  }, [data, reload]);
 
   return (
     <>
@@ -46,6 +53,16 @@ export default function FitnessPage() {
       <WorkoutSheet open={wSheet.open} w={wSheet.w} onClose={() => setWSheet({ open: false })} onSaved={reload} />
     </>
   );
+}
+
+async function syncGarmin(days: number): Promise<{ activities_imported: number; activities_found: number; days_saved: number; warnings: string[] }> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Please sign in again.");
+  const res = await fetch("/api/garmin/sync", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ days }) });
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(out.error || "Garmin sync failed.");
+  return out;
 }
 
 function isRun(w: Workout) { return w.type === "run" || w.type === "treadmill_run"; }
@@ -77,7 +94,7 @@ function Overview({ workouts, days, reload }: { workouts: Workout[]; days: Day[]
           <Stat label="Resting HR" value={todayRow?.resting_hr ?? "—"} unit={todayRow?.resting_hr ? "bpm" : undefined} />
           <Stat label="Readiness" value={todayRow?.training_readiness ?? todayRow?.body_battery ?? "—"} sub={todayRow?.training_readiness != null ? "training readiness" : todayRow?.body_battery != null ? "body battery" : "not recorded"} />
         </div>
-        {!todayRow && <p className="text-xs text-ink-3 mt-3">No daily metrics for today. Log them manually until Garmin sync is approved.</p>}
+        {!todayRow && <p className="text-xs text-ink-3 mt-3">No daily metrics for today. Sync Garmin from the Garmin tab, or log them manually.</p>}
       </Card>
       <Card title="Running">
         <div className="grid grid-cols-2 gap-4">
@@ -278,6 +295,16 @@ function Import({ onDone }: { onDone: () => void }) {
 function Garmin({ conn, logs, workouts, reload }: { conn: Conn | null; logs: Log[]; workouts: Workout[]; reload: () => void }) {
   const toast = useToast();
   const [disc, setDisc] = useState(false);
+  const [busy, setBusy] = useState<number | null>(null);
+  async function sync(days: number) {
+    setBusy(days);
+    try {
+      const r = await syncGarmin(days);
+      toast(`Synced · ${r.activities_imported} new ${r.activities_imported === 1 ? "activity" : "activities"} · ${r.days_saved} days of metrics`);
+      if (r.warnings?.length) toast(`Some metrics skipped: ${r.warnings[0]}`, "err");
+      reload();
+    } catch (e) { toast(errMsg(e), "err"); reload(); } finally { setBusy(null); }
+  }
   const status = conn?.status ?? "pending_connection";
   const latestImport = workouts.find((w) => w.source !== "manual");
   const failures = logs.filter((l) => l.outcome === "failed");
@@ -295,15 +322,16 @@ function Garmin({ conn, logs, workouts, reload }: { conn: Conn | null; logs: Log
           <ListRow key={l} right={<span className="text-sm text-right text-ink-2">{v}</span>}><div className="flex items-center gap-3"><Icon className="size-4 text-ink-3" /><span>{l}</span></div></ListRow>
         ))}
         <div className="p-4 border-t border-line-soft flex flex-wrap gap-2">
-          <Button disabled title="Available once Garmin approves the developer application">Connect Garmin</Button>
+          <Button disabled={busy != null} onClick={() => sync(14)}><RefreshCw className={cx("size-4", busy === 14 && "animate-spin")} />{busy === 14 ? "Syncing…" : "Sync now"}</Button>
+          <Button variant="secondary" disabled={busy != null} onClick={() => sync(90)}>{busy === 90 ? "Syncing…" : "Sync last 90 days"}</Button>
           <Button variant="danger" disabled={!conn} onClick={() => setDisc(true)}><Link2Off className="size-4" />Disconnect</Button>
         </div>
       </Card>
-      <Card title="Why it says Pending">
+      <Card title="How Garmin sync works">
         <div className="text-sm text-ink-2 space-y-2">
-          <p>Automatic sync uses Garmin&apos;s official <b>Connect Developer Program</b> (Health &amp; Activity APIs). Garmin must approve the application before any data can flow. AMAN OS never scrapes Garmin Connect.</p>
-          <p>Apply at <span className="text-accent">developer.garmin.com</span> → Connect Developer Program. Once approved, the server-side sync (OAuth + webhooks) will be switched on and this page will show live status.</p>
-          <p>Until then, use <b>Import files</b> — FIT, TCX and CSV exports work today.</p>
+          <p>AMAN OS reads your own data through Garmin&apos;s official <b>Connect Personal API</b> — activities, steps, sleep, resting HR, HRV and body battery. Read-only; nothing is sent to your watch.</p>
+          <p>The app syncs automatically when you open Fitness (if the last sync is over 2 hours old). Tap <b>Sync now</b> any time; use <b>Sync last 90 days</b> once to backfill.</p>
+          <p>Your key lives only in Netlify (<span className="font-mono text-xs">GARMIN_PERSONAL_API_KEY</span>). When it expires, create a new one at Garmin Connect → Settings → Personal API Key and replace it there.</p>
         </div>
       </Card>
       {logs.length > 0 && (
