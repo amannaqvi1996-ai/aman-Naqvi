@@ -13,6 +13,7 @@ import { STATUSES, statusIdx, type Judgment, type Subject } from "./types";
 import { Checklist } from "./checklist";
 import { Flashcards, CaseFlashcards } from "./flashcards";
 import { Briefs, BriefViewer, type Brief } from "./briefs";
+import { CaseQA } from "./qa";
 
 type Session = { id: string; judgment_id: string | null; started_at: string; ended_at: string | null; duration_minutes: number | null; activity: string };
 type Mock = { id: string; title: string; taken_on: string; max_marks: number; marks_obtained: number | null; subject_id: string | null; notes: string | null };
@@ -24,6 +25,8 @@ export default function AorPage() {
   const closeBrief = useCallback(() => setBrief(null), []);
   const [cardsFor, setCardsFor] = useState<string | null>(null);
   const closeCards = useCallback(() => setCardsFor(null), []);
+  const [qaNo, setQaNo] = useState<number | null>(null);
+  const closeQA = useCallback(() => setQaNo(null), []);
   useEffect(() => { if (typeof window !== "undefined" && window.location.hash === "#import") setTab("import"); else if (typeof window !== "undefined" && window.location.hash === "#flashcards") setTab("flashcards"); else if (typeof window !== "undefined" && window.location.hash === "#briefs") setTab("briefs"); }, []);
 
   const { data, error, loading, reload } = useLive(async () => {
@@ -47,16 +50,17 @@ export default function AorPage() {
           {tab === "plan" && <Plan {...data} onOpen={open} reload={reload} />}
           {tab === "briefs" && <Briefs judgments={data.judgments} onOpen={setBrief} />}
           {tab === "flashcards" && <Flashcards />}
-          {tab === "checklist" && <Checklist subjects={data.subjects} judgments={data.judgments} reload={reload} onBrief={setBrief} onCards={setCardsFor} />}
+          {tab === "checklist" && <Checklist subjects={data.subjects} judgments={data.judgments} reload={reload} onBrief={setBrief} onCards={setCardsFor} onQA={setQaNo} />}
           {tab === "judgments" && <JudgmentList {...data} onOpen={open} />}
           {tab === "calendar" && <Calendar judgments={data.judgments} onOpen={open} reload={reload} />}
           {tab === "mocks" && <Mocks subjects={data.subjects} />}
           {tab === "import" && <Import subjects={data.subjects} judgments={data.judgments} onDone={() => { reload(); setTab("judgments"); }} />}
         </>
       )}
-      <JudgmentSheet open={sheet.open} judgment={sheet.j} subjects={data?.subjects ?? []} onClose={() => setSheet({ open: false, j: null })} onSaved={reload} onBrief={setBrief} onCards={setCardsFor} />
+      <JudgmentSheet open={sheet.open} judgment={sheet.j} subjects={data?.subjects ?? []} onClose={() => setSheet({ open: false, j: null })} onSaved={reload} onBrief={setBrief} onCards={setCardsFor} onQA={setQaNo} />
       <BriefViewer brief={brief} onClose={closeBrief} />
       <CaseFlashcards caseName={cardsFor} onClose={closeCards} />
+      <CaseQA caseNo={qaNo} onClose={closeQA} />
     </>
   );
 }

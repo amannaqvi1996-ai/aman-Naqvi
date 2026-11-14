@@ -19,6 +19,12 @@ const norm = (x?: string | null) => (x ?? "").toLowerCase().replace(/[^a-z0-9]+/
 const byCitation = new Map(LEADING_CASES.map((c) => [norm(c.citation), c]));
 const byName = new Map(LEADING_CASES.map((c) => [norm(c.case_name), c]));
 
+/** The case's number in the official List of Leading Cases, if it is on the list. */
+export function leadingNoFor(j: Pick<Judgment, "case_name" | "citation"> | null | undefined): number | null {
+  if (!j) return null;
+  return (byCitation.get(norm(j.citation)) ?? byName.get(norm(j.case_name)))?.no ?? null;
+}
+
 export function briefFor(j: Pick<Judgment, "case_name" | "citation"> | null | undefined): Brief | null {
   if (!j) return null;
   const c = byCitation.get(norm(j.citation)) ?? byName.get(norm(j.case_name));

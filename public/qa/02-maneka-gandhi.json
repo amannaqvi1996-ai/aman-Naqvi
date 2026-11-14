@@ -1,0 +1,85 @@
+{
+  "no": 2,
+  "case_name": "Maneka Gandhi v. Union of India",
+  "citation": "(1978) 1 SCC 248",
+  "note": "Model answers are written to the length you can realistically handwrite in the time shown. Tags: 🟢 certain · 🟡 check against the judgment before relying on it.",
+  "questions": [
+    {
+      "id": "q1",
+      "marks": 2,
+      "question": "State the ratio decidendi of Maneka Gandhi v. Union of India.",
+      "minutes": 4,
+      "words": 60,
+      "skeleton": ["One sentence: what Art. 21 now requires", "Add: Arts. 14, 19 and 21 are not mutually exclusive"],
+      "examiner": ["Exact ratio, not a summary of facts", "Citation written once, correctly"],
+      "answer": "In **Maneka Gandhi v. Union of India, (1978) 1 SCC 248** (7 Judges), the Court held that a law depriving a person of personal liberty must not merely prescribe *some* procedure: the procedure must be **right, just and fair, not arbitrary, fanciful or oppressive**. Such a law must also satisfy **Articles 14 and 19**, since Arts. 14, 19 and 21 are not mutually exclusive. 🟢",
+      "confidence": "green"
+    },
+    {
+      "id": "q2",
+      "marks": 2,
+      "question": "What was the final outcome of the writ petition in Maneka Gandhi? Was s. 10(3)(c) of the Passports Act, 1967 struck down?",
+      "minutes": 4,
+      "words": 60,
+      "skeleton": ["Statute: upheld", "Order: no formal quashing", "Why: Attorney General's undertaking cured the defect"],
+      "examiner": ["Avoids the common error 'petition allowed, order quashed'"],
+      "answer": "**Section 10(3)(c) was upheld**, not struck down; natural justice was read into it. The Court **passed no formal order quashing the impounding**. The Attorney General undertook that the petitioner's representation would be considered and she would be heard expeditiously; this undertaking cured the absence of a hearing, and the petition was disposed of on that footing. 🟢",
+      "confidence": "green"
+    },
+    {
+      "id": "q3",
+      "marks": 5,
+      "question": "Write a short note on the 'post-decisional hearing' with reference to Maneka Gandhi.",
+      "minutes": 9,
+      "words": 150,
+      "skeleton": ["Rule: audi alteram partem read into a silent statute", "Exception: genuine urgency → act first, hear immediately after", "Maneka facts", "Later narrowing: Swadeshi Cotton Mills, K.I. Shephard", "Conclusion: exception, not option"],
+      "examiner": ["States the normal rule before the exception", "Shows the present (narrowed) position"],
+      "answer": "## Rule\nWhere a statute is silent, **audi alteram partem is implied** unless excluded expressly or by necessary implication. The quasi-judicial/administrative distinction is irrelevant; what matters is civil consequences (A.K. Kraipak, 1969). 🟢\n## The exception in Maneka\nBhagwati J. held that where **genuine urgency** makes a prior hearing impractical (e.g. a passport-holder may leave the country), the authority may act first, but a **remedial hearing must follow immediately**. Here there was no hearing at all and reasons were refused; the Attorney General's undertaking to hear her cured the defect. 🟢\n## Later position\nThe device has been narrowed: **Swadeshi Cotton Mills v. UoI, (1981) 1 SCC 664** and **K.I. Shephard v. UoI, (1987) 4 SCC 431**: a post-decisional hearing is ordinarily no substitute for a prior one. 🟢\n## Conclusion\nThe post-decisional hearing is a **narrow exception**, never an alternative to the prior hearing.",
+      "confidence": "green"
+    },
+    {
+      "id": "q4",
+      "marks": 5,
+      "question": "'The golden triangle.' Comment with reference to Maneka Gandhi.",
+      "minutes": 9,
+      "words": 150,
+      "skeleton": ["Name the three Articles", "What each side tests", "Source: Maneka (Gopalan rejected)", "Caveat: phrase is later shorthand", "One line on significance"],
+      "examiner": ["Each Article's role stated, not just listed", "Accurate on where the phrase comes from"],
+      "answer": "## Meaning\nThe 'golden triangle' refers to **Articles 14, 19 and 21** read together. A law affecting personal liberty must clear all three:\n- **Art. 21**: the procedure must be fair, just and reasonable.\n- **Art. 19**: if it directly and inevitably affects a 19(1) freedom, it must be a reasonable restriction under 19(2)–(6).\n- **Art. 14**: it must be free of arbitrariness (Royappa, 1974).\n## Source\nManeka rejected A.K. Gopalan's 'watertight compartments' view, building on R.C. Cooper's 'effect' test, and held the three Articles overlapping. Krishna Iyer J.: no article in Part III is 'an island'. 🟢\n## Caveat\nThe phrase itself is **later judicial shorthand** (associated with Minerva Mills, 1980); Maneka speaks of Part III as an integral whole. 🟡\n## Significance\nFailure at any one side is fatal; the triangle is the base of later Art. 21 expansion.",
+      "confidence": "yellow"
+    },
+    {
+      "id": "q5",
+      "marks": 10,
+      "question": "'Equality and arbitrariness are sworn enemies.' Explain the new dimension of Article 14 with reference to Maneka Gandhi and later cases.",
+      "minutes": 18,
+      "words": 300,
+      "skeleton": ["Traditional test: classification (intelligible differentia + rational nexus)", "Royappa: arbitrariness as antithesis of equality", "Maneka: applied to constitutional review; 'brooding omnipresence'", "Ajay Hasia: State action", "Shayara Bano: manifest arbitrariness strikes legislation", "Criticism + proportionality", "Conclusion"],
+      "examiner": ["Shows the move from classification to arbitrariness", "Traces the line beyond Maneka", "Balanced: notes criticism"],
+      "answer": "## 1. The traditional test\nArt. 14 was first applied through **reasonable classification**: (i) an intelligible differentia, (ii) with a rational nexus to the object of the law. On this view Art. 14 was only about unequal classes.\n## 2. Royappa: a new dimension\nIn **E.P. Royappa v. State of T.N., (1974) 4 SCC 3**, Bhagwati J. said equality is a dynamic concept that cannot be confined within traditional limits: **equality and arbitrariness are sworn enemies**; an arbitrary act is unequal both in law and in politics. 🟢\n## 3. Maneka Gandhi\nIn **Maneka Gandhi, (1978) 1 SCC 248**, the Court carried this into constitutional review generally:\n- Art. 14 **strikes at arbitrariness in State action** and ensures fairness and equality of treatment.\n- The principle of **reasonableness pervades Art. 14 'like a brooding omnipresence'**.\n- Since Arts. 14, 19 and 21 overlap, a procedure under Art. 21 must also pass the non-arbitrariness test. 🟢\n## 4. Development\n- **Ajay Hasia, (1981) 1 SCC 722**: arbitrary State action offends Art. 14.\n- **Shayara Bano v. UoI, (2017) 9 SCC 1**: **manifest arbitrariness** can invalidate even legislation (instant triple talaq). 🟢\n## 5. Criticism\nArbitrariness is a standard without a structure and can invite subjective review. Proportionality (Modern Dental, 2016; Puttaswamy, 2017) now supplies the structure.\n## Conclusion\nAfter Maneka, Art. 14 is not only a rule against unequal classification but a **guarantee against arbitrariness**, the basis of modern review of State action.",
+      "confidence": "green"
+    },
+    {
+      "id": "q6",
+      "marks": 15,
+      "question": "Problem: Under a State Act, the Licensing Officer cancels X's trade licence 'in public interest' without notice. The Act is silent on any hearing. When X asks for reasons, the Officer refuses. Advise X with reference to Maneka Gandhi.",
+      "minutes": 27,
+      "words": 450,
+      "skeleton": ["Issues (numbered)", "Natural justice implied into silent statute", "Civil consequences → hearing required", "Urgency? → post-decisional hearing only as exception (Shephard)", "Reasons refused → no opportunity to answer", "Arts. 14 / 19(1)(g) / 21 analysis through the three gates", "Remedy: Art. 226 / 32 writ, certiorari + mandamus", "Conclusion / advice"],
+      "examiner": ["Applies the principle to the facts at each step", "Clear conclusion and remedy", "Correct forum"],
+      "answer": "## Issues\n1. Is a hearing required though the Act is silent?\n2. Can the cancellation be saved as an urgent measure?\n3. Is the refusal of reasons lawful?\n4. Does the order offend Arts. 14 and 19(1)(g)?\n5. What remedy is available?\n## 1. Hearing required\nCancelling a licence has **civil consequences**; the administrative label is irrelevant (A.K. Kraipak). In **Maneka Gandhi, (1978) 1 SCC 248**, the Court held that **audi alteram partem is read into a statute** unless excluded expressly or by necessary implication. Silence is not exclusion. X was entitled to notice and a hearing. 🟢\n## 2. No urgency\nManeka permits acting first only in **genuine urgency**, followed immediately by a hearing; **K.I. Shephard, (1987) 4 SCC 431** treats that as exceptional. Nothing on these facts suggests urgency, and no hearing was offered even afterwards. 🟢\n## 3. Reasons\nIn Maneka the power to withhold reasons was held exceptional, to be used sparingly; refusal without justification **denied the very opportunity to be heard**. The same follows here.\n## 4. Constitutional grounds\n- **Art. 19(1)(g)**: the order directly affects X's trade; an unheard, unexplained cancellation is not a reasonable restriction under 19(6).\n- **Art. 14**: action without hearing or reasons is **arbitrary** (Royappa; Maneka).\n- (Art. 21 can be added on livelihood grounds: Olga Tellis.) 🟡\n## 5. Remedy\nA writ petition under **Art. 226** before the High Court (or **Art. 32** for Arts. 14/19 violations), seeking **certiorari** to quash the order and **mandamus** to restore the licence, without prejudice to fresh action after a fair hearing.\n## Advice\nX has a strong case: the order is void for breach of natural justice and is arbitrary under Art. 14. The authority may act again, but only after notice, disclosure of the case against X and a hearing.",
+      "confidence": "green"
+    },
+    {
+      "id": "q7",
+      "marks": 20,
+      "question": "'Maneka Gandhi turned Article 21 from a formality into a guarantee.' Critically examine, with reference to the position before and after the decision.",
+      "minutes": 36,
+      "words": 600,
+      "skeleton": ["Intro: text of Art. 21 + thesis", "Before: Gopalan (1950) — any enacted procedure; watertight compartments", "Bridge: R.C. Cooper (1970) effect test; Emergency/ADM Jabalpur context", "Maneka: facts in 3 lines; the two moves; three gates; natural justice", "After: expansion line (Hoskot → Puttaswamy)", "Present: proportionality operationalises Maneka", "Critique: for and against", "Conclusion with ratio verbatim"],
+      "examiner": ["Doctrinal sequence: Gopalan → Cooper → Maneka → Puttaswamy", "Both sides of the critique", "Accurate disposition and citations", "Conclusion that takes a position"],
+      "answer": "## Introduction\nArt. 21: no person shall be deprived of life or personal liberty **except according to procedure established by law**. The framers chose this phrase over 'due process'. **Maneka Gandhi v. UoI, (1978) 1 SCC 248** (7 Judges) changed what it means.\n## Before Maneka\n- **A.K. Gopalan v. State of Madras, AIR 1950 SC 27**: 'law' meant enacted law; any procedure a legislature prescribed sufficed. Fundamental rights were **watertight compartments**: a detention law answered to Arts. 21/22 alone, not Art. 19. 🟢\n- **R.C. Cooper v. UoI, (1970) 1 SCC 248** cracked this: the **direct and inevitable effect** of a law, not its object, decides which rights it engages.\n- During the Emergency, **ADM Jabalpur (1976)** showed how hollow Art. 21 could become.\n## The decision\nThe petitioner's passport was impounded under s. 10(3)(c), Passports Act 1967, 'in the interests of the general public'; reasons were refused and no hearing given. The Court held:\n1. The right to travel abroad is part of **personal liberty** (Satwant Singh, 1967).\n2. 'Procedure established by law' must be **right, just and fair**, not arbitrary, fanciful or oppressive.\n3. Arts. 14, 19 and 21 are **not mutually exclusive**; Gopalan was overruled on this point.\n4. Art. 14 strikes at **arbitrariness** (Royappa).\n5. **Natural justice** is read into a silent statute; a post-decisional hearing only in genuine urgency.\nSection 10(3)(c) was upheld; no formal order was passed, as the Attorney General undertook to hear her. 🟢\n## After Maneka\nThe fairness requirement opened Art. 21 to substantive content: free legal aid (**M.H. Hoskot, 1978**), speedy trial (**Hussainara Khatoon, 1980**), dignity (**Francis Coralie Mullin, 1981**), livelihood (**Olga Tellis, 1985**), and privacy (**K.S. Puttaswamy, (2017) 10 SCC 1**, which expressly overruled ADM Jabalpur). 🟢\nToday the 'fair, just and reasonable' standard is applied through **proportionality** (Modern Dental, 2016; Puttaswamy; Anuradha Bhasin, 2020).\n## Critical evaluation\n**For:** it restored liberty after the Emergency; made Part III coherent; fairness became a constitutional requirement, not a legislative favour.\n**Against:** it effectively read in the **due process** the Constituent Assembly rejected; 'fair, just and reasonable' was **unstructured** and invited judicial subjectivity; and the Court settled sweeping questions in a case where it granted **no relief**.\n**Answer to the critique:** proportionality now supplies the structure Maneka lacked, and the text of Art. 21 was never strained, only read with Arts. 14 and 19.\n## Conclusion\nThe statement is substantially correct. After Maneka, 'the procedure prescribed by law has to be **fair, just and reasonable, not fanciful, oppressive or arbitrary**' (Bhagwati J.). Article 21 became a substantive guarantee, the trunk from which most modern rights jurisprudence grows.",
+      "confidence": "green"
+    }
+  ]
+}
