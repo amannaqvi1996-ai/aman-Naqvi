@@ -13,3 +13,9 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Study briefs are for the app only: keep them out of search engines.
+[[headers]]
+  for = "/briefs/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
