@@ -30,7 +30,7 @@ export function Flashcards() {
   const [mode, setMode] = useState<"home" | "review" | "import" | "browse">("home");
   const [edit, setEdit] = useState<Partial<Flashcard> | null>(null);
 
-  if (error) return <ErrorBox error={/flashcards/.test(error) && /exist|schema cache/i.test(error) ? "The flashcards table isn't set up yet. Run supabase/migrations/20261114_flashcards.sql in Supabase → SQL Editor, then retry." : error} onRetry={reload} />;
+  if (error) return <ErrorBox error={/flashcard/.test(error) && /exist|schema cache/i.test(error) ? "The flashcards table isn't set up yet. Run supabase/migrations/20261114_flashcards.sql in Supabase → SQL Editor, then retry." : error} onRetry={reload} />;
   if (loading && !data) return <Spinner />;
   if (!data) return null;
 
