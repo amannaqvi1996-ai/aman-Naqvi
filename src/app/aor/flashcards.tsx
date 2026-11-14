@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Upload, Play, RotateCcw, Trash2, Pencil, Layers } from "lucide-react";
+import { Plus, Upload, Play, RotateCcw, Trash2, Pencil, Layers, ArrowLeft, Repeat } from "lucide-react";
 import { supabase, errMsg } from "@/lib/supabase";
 import { useLive, must } from "@/lib/hooks";
 import { dayKey, addDays, dayStartISO } from "@/lib/format";
@@ -76,7 +76,7 @@ export function Flashcards() {
 }
 
 // ---------------- Review session ----------------
-function Review({ queue: initial, onExit }: { queue: Flashcard[]; onExit: () => void }) {
+function Review({ queue: initial, onExit, practice = false }: { queue: Flashcard[]; onExit: () => void; practice?: boolean }) {
   const toast = useToast();
   const [queue, setQueue] = useState(initial);
   const [shown, setShown] = useState(false);
@@ -86,16 +86,19 @@ function Review({ queue: initial, onExit }: { queue: Flashcard[]; onExit: () => 
 
   async function grade(g: Grade) {
     if (!card || busy) return;
-    setBusy(true);
     const next = schedule(card, g);
     const due_date = addDays(dayKey(), next.interval_days);
-    const { error } = await supabase.from("flashcards").update({ ...next, due_date, last_reviewed_at: new Date().toISOString() }).eq("id", card.id);
-    if (!error) await supabase.from("flashcard_reviews").insert({ card_id: card.id, grade: g, interval_days: next.interval_days });
-    setBusy(false);
-    if (error) { toast(errMsg(error), "err"); return; }
+    if (!practice) {
+      // Practice runs (cards not yet due) don't change the schedule.
+      setBusy(true);
+      const { error } = await supabase.from("flashcards").update({ ...next, due_date, last_reviewed_at: new Date().toISOString() }).eq("id", card.id);
+      if (!error) await supabase.from("flashcard_reviews").insert({ card_id: card.id, grade: g, interval_days: next.interval_days });
+      setBusy(false);
+      if (error) { toast(errMsg(error), "err"); return; }
+    }
     setDone((n) => n + 1);
     setShown(false);
-    setQueue((q) => next.interval_days === 0 ? [...q.slice(1), { ...card, ...next, due_date }] : q.slice(1));
+    setQueue((q) => next.interval_days === 0 ? [...q.slice(1), practice ? card : { ...card, ...next, due_date }] : q.slice(1));
   }
 
   useEffect(() => {
@@ -120,7 +123,7 @@ function Review({ queue: initial, onExit }: { queue: Flashcard[]; onExit: () => 
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-2 text-sm text-ink-3">
-        <span className="truncate">{card.deck}</span>
+        <span className="truncate">{card.deck}{practice ? " · practice (schedule unchanged)" : ""}</span>
         <span className="tabular shrink-0">{queue.length} left · {done} done</span>
       </div>
       <Card>
@@ -139,7 +142,7 @@ function Review({ queue: initial, onExit }: { queue: Flashcard[]; onExit: () => 
           <div className="grid grid-cols-4 gap-2">
             {opts.map((o) => (
               <button key={o.g} disabled={busy} onClick={() => grade(o.g)} className={cx("h-[60px] rounded-xl font-semibold flex flex-col items-center justify-center transition active:scale-[.98] disabled:opacity-50", o.cls)}>
-                <span>{o.label}</span><span className="text-xs font-medium opacity-80">{intervalLabel(schedule(card, o.g).interval_days)}</span>
+                <span>{o.label}</span>{!practice && <span className="text-xs font-medium opacity-80">{intervalLabel(schedule(card, o.g).interval_days)}</span>}
               </button>
             ))}
           </div>
@@ -260,5 +263,78 @@ function CardEditor({ card, decks, onClose, onSaved }: { card: Partial<Flashcard
       <Confirm open={del} title="Delete this card?" body="Its review history will be deleted too." onClose={() => setDel(false)}
         onConfirm={async () => { const { error } = await supabase.from("flashcards").delete().eq("id", f.id!); if (error) toast(errMsg(error), "err"); else { onSaved(); onClose(); } }} />
     </>
+  );
+}
+
+// ---------------- Flashcards for one case (opened from the checklist / judgment) ----------------
+const words = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+/** A deck belongs to a case when every word of the deck name appears in the case name (e.g. "Maneka Gandhi"). */
+export function deckMatches(deck: string, caseName: string) {
+  const d = words(deck), c = new Set(words(caseName));
+  return d.length > 0 && d.every((w) => c.has(w));
+}
+/** Short deck name for a case: the part before " v. ". */
+export function deckNameFor(caseName: string) {
+  return caseName.split(/\s+v(?:s)?\.?\s+/i)[0].replace(/^(his holiness|smt\.?|dr\.?|m\/s\.?)\s+/i, "").replace(/\s+(and|&)\s+(ors|anr|others)\.?.*$/i, "").trim() || caseName;
+}
+
+export function CaseFlashcards({ caseName, onClose }: { caseName: string | null; onClose: () => void }) {
+  const today = dayKey();
+  const [mode, setMode] = useState<"menu" | "due" | "all">("menu");
+  const [adding, setAdding] = useState<Partial<Flashcard> | null>(null);
+  const { data, error, loading, reload } = useLive(async () => {
+    if (!caseName) return [] as Flashcard[];
+    const all = await must(supabase.from("flashcards").select(COLS).eq("suspended", false).order("created_at").limit(5000));
+    return (all as Flashcard[]).filter((c) => deckMatches(c.deck, caseName));
+  }, ["flashcards"], [caseName]);
+  useEffect(() => {
+    if (!caseName) return;
+    const k = (e: KeyboardEvent) => e.key === "Escape" && !adding && onClose();
+    window.addEventListener("keydown", k);
+    const o = document.body.style.overflow; document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", k); document.body.style.overflow = o; };
+  }, [caseName, onClose, adding]);
+  if (!caseName) return null;
+  const cards = data ?? [];
+  const due = cards.filter((c) => c.due_date <= today);
+  const decks = [...new Set(cards.map((c) => c.deck))];
+  const back = () => { setMode("menu"); reload(); };
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-bg anim-fade" role="dialog" aria-modal="true" aria-label={`Flashcards: ${caseName}`}>
+      <div className="flex items-center gap-2 px-2 pt-[calc(env(safe-area-inset-top)+6px)] pb-2 border-b border-line-soft bg-surface">
+        <button onClick={onClose} className="h-10 px-2 rounded-lg flex items-center gap-1 text-ink-2 hover:bg-surface-2 shrink-0" aria-label="Back"><ArrowLeft className="size-5" /><span className="text-sm font-medium">Back</span></button>
+        <div className="flex-1 min-w-0 text-center">
+          <div className="text-sm font-semibold truncate">{caseName}</div>
+          <div className="text-[11px] text-ink-3 truncate">Flashcards</div>
+        </div>
+        <span className="w-[72px] shrink-0" />
+      </div>
+      <div className="flex-1 overflow-y-auto px-4 py-4 safe-bottom">
+        {error ? <ErrorBox error={/flashcard/.test(error) && /exist|schema cache/i.test(error) ? "The flashcards table isn't set up yet. Run supabase/migrations/20261114_flashcards.sql in Supabase → SQL Editor, then retry." : error} onRetry={reload} />
+          : loading && !data ? <Spinner />
+          : mode === "due" ? <Review queue={due} onExit={back} />
+          : mode === "all" ? <Review queue={cards} onExit={back} practice />
+          : (
+            <div className="max-w-2xl mx-auto">
+              <Card>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <Stat label="Cards" value={cards.length} />
+                  <Stat label="Due now" value={due.length} />
+                  <Stat label="Deck" value={<span className="text-base">{decks.join(", ") || "—"}</span>} />
+                </div>
+                {cards.length ? (
+                  <div className="space-y-2">
+                    {due.length > 0 && <Button size="lg" onClick={() => setMode("due")}><Play className="size-4" />Review {due.length} due card{due.length === 1 ? "" : "s"}</Button>}
+                    <Button size="lg" variant={due.length ? "secondary" : "primary"} onClick={() => setMode("all")}><Repeat className="size-4" />Practise all {cards.length} card{cards.length === 1 ? "" : "s"}</Button>
+                    <p className="text-xs text-ink-3 text-center">Practice doesn&apos;t change when cards are next due. Only &ldquo;Review&rdquo; does.</p>
+                  </div>
+                ) : <Empty title="No flashcards for this case yet" body="Add your anchor cards here, or import a card file from the Flashcards tab." />}
+                <Button variant="secondary" className="w-full mt-3" onClick={() => setAdding({ deck: decks[0] ?? deckNameFor(caseName) })}><Plus className="size-4" />Add a card</Button>
+              </Card>
+            </div>
+          )}
+      </div>
+      <CardEditor key={adding ? "new" : "closed"} card={adding} decks={decks} onClose={() => setAdding(null)} onSaved={reload} />
+    </div>
   );
 }

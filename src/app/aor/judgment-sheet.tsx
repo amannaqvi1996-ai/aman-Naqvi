@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Trash2, Plus, Check, BookOpen } from "lucide-react";
+import { Trash2, Plus, Check, BookOpen, Layers } from "lucide-react";
 import { supabase, errMsg } from "@/lib/supabase";
 import { fmtDay, fmtDateTime } from "@/lib/format";
 import { Sheet, Field, Input, Select, Textarea, Button, Segmented, useToast, Badge, Confirm, cx } from "@/components/ui";
@@ -16,7 +16,7 @@ const TEXT_FIELDS: { key: keyof Judgment; label: string }[] = [
 type Note = { id: string; body: string; paragraph_ref: string | null; created_at: string };
 type Q = { id: string; question: string; answer: string | null; last_result: string | null; last_asked_at: string | null };
 
-export function JudgmentSheet({ judgment, subjects, open, onClose, onSaved, onBrief }: { judgment: Partial<Judgment> | null; subjects: Subject[]; open: boolean; onClose: () => void; onSaved: () => void; onBrief?: (b: Brief) => void }) {
+export function JudgmentSheet({ judgment, subjects, open, onClose, onSaved, onBrief, onCards }: { judgment: Partial<Judgment> | null; subjects: Subject[]; open: boolean; onClose: () => void; onSaved: () => void; onBrief?: (b: Brief) => void; onCards?: (caseName: string) => void }) {
   const toast = useToast();
   const [tab, setTab] = useState<"details" | "revise" | "notes">("details");
   const [j, setJ] = useState<Partial<Judgment>>({});
@@ -65,9 +65,12 @@ export function JudgmentSheet({ judgment, subjects, open, onClose, onSaved, onBr
 
   return (
     <Sheet open={open} onClose={onClose} title={isNew ? "Add judgment" : (j.case_name ?? "Judgment")} wide>
-      {!isNew && onBrief && (() => { const b = briefFor({ case_name: j.case_name ?? "", citation: j.citation ?? null }); return b ? (
-        <Button variant="secondary" className="w-full mb-3" onClick={() => onBrief(b)}><BookOpen className="size-4" />Open master brief</Button>
-      ) : null; })()}
+      {!isNew && (onBrief || onCards) && (() => { const b = briefFor({ case_name: j.case_name ?? "", citation: j.citation ?? null }); return (
+        <div className="flex gap-2 mb-3">
+          {b && onBrief && <Button variant="secondary" className="flex-1" onClick={() => onBrief(b)}><BookOpen className="size-4" />Master brief</Button>}
+          {onCards && j.case_name && <Button variant="secondary" className="flex-1" onClick={() => onCards(j.case_name!)}><Layers className="size-4" />Flashcards</Button>}
+        </div>
+      ); })()}
       {!isNew && <div className="mb-4"><Segmented value={tab} onChange={setTab} options={[{ value: "revise", label: "Study" }, { value: "details", label: "Details" }, { value: "notes", label: "Notes & recall" }]} /></div>}
 
       {tab === "revise" && !isNew && (
