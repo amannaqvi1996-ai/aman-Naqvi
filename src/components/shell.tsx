@@ -42,11 +42,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [more, setMore] = useState(false);
   const onLogin = path.startsWith("/login");
+  const onConsent = path.startsWith("/oauth/consent");
+  const onAuthRoute = onLogin || onConsent;
 
   useEffect(() => {
-    if (ready && !session && !onLogin) router.replace("/login/");
-    if (ready && session && onLogin) router.replace("/");
-  }, [ready, session, onLogin, router]);
+    if (ready && !session && !onAuthRoute) router.replace("/login/");
+    if (ready && session && onLogin) {
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
+    }
+  }, [ready, session, onAuthRoute, onLogin, router]);
 
   useEffect(() => { setMore(false); }, [path]);
 
@@ -65,7 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [router]);
 
-  if (onLogin) return <>{children}</>;
+  if (onAuthRoute) return <>{children}</>;
   if (!ready || !session) return <div className="min-h-dvh grid place-items-center"><Spinner label="Opening AMAN OS…" /></div>;
 
   return (
