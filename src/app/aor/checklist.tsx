@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import { Check, Search, ListPlus, BookOpen } from "lucide-react";
+import { Check, Search, ListPlus, BookOpen, Layers } from "lucide-react";
 import { supabase, errMsg } from "@/lib/supabase";
 import { dayKey, addDays } from "@/lib/format";
 import { Card, Button, Input, Select, Textarea, Sheet, Empty, useToast, cx } from "@/components/ui";
@@ -16,7 +16,7 @@ const STEPS: { label: string; short: string; done: JStatus; idx: number }[] = [
 ];
 const BEFORE: JStatus[] = ["not_started", "first_reading_completed", "first_revision_completed"];
 
-export function Checklist({ subjects, judgments, reload, onBrief }: { subjects: Subject[]; judgments: Judgment[]; reload: () => void; onBrief?: (b: Brief) => void }) {
+export function Checklist({ subjects, judgments, reload, onBrief, onCards }: { subjects: Subject[]; judgments: Judgment[]; reload: () => void; onBrief?: (b: Brief) => void; onCards?: (caseName: string) => void }) {
   const toast = useToast();
   const [q, setQ] = useState("");
   const [subject, setSubject] = useState("");
@@ -88,7 +88,7 @@ export function Checklist({ subjects, judgments, reload, onBrief }: { subjects: 
       {!judgments.length ? <Card><Empty title="No judgments yet" body="Tap “Add list” and paste your judgments, one per line." action={<Button onClick={() => setAdding(true)}>Add list</Button>} /></Card> : (
         <Card pad={false}>
           <div className="flex items-center gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-ink-3 border-b border-line-soft">
-            <span className="flex-1">Judgment</span><span className="w-8 text-center">Brief</span>
+            <span className="flex-1">Judgment</span><span className="w-8 text-center">Brief</span>{onCards && <span className="w-8 text-center">Cards</span>}
             {STEPS.map((st) => <span key={st.short} className="w-12 text-center">{st.short}</span>)}
           </div>
           {list.length ? list.map((j) => {
@@ -100,6 +100,7 @@ export function Checklist({ subjects, judgments, reload, onBrief }: { subjects: 
                   {j.citation && <div className="text-xs text-ink-3 truncate">{j.citation}</div>}
                 </div>
                 {(() => { const b = onBrief && briefFor(j); return b ? <button onClick={() => onBrief!(b)} aria-label={`Open master brief: ${j.case_name}`} title="Open master brief" className="size-8 grid place-items-center rounded-lg text-accent hover:bg-surface-2 shrink-0"><BookOpen className="size-4" /></button> : <span className="size-8 shrink-0" />; })()}
+                {onCards && <button onClick={() => onCards(j.case_name)} aria-label={`Flashcards: ${j.case_name}`} title="Flashcards" className="size-8 grid place-items-center rounded-lg text-info hover:bg-surface-2 shrink-0"><Layers className="size-4" /></button>}
                 {STEPS.map((st, i) => {
                   const on = idx >= st.idx;
                   return (
