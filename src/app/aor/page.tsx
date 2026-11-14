@@ -11,14 +11,15 @@ import { BarChartBox } from "@/components/charts";
 import { JudgmentSheet } from "./judgment-sheet";
 import { STATUSES, statusIdx, type Judgment, type Subject } from "./types";
 import { Checklist } from "./checklist";
+import { Flashcards } from "./flashcards";
 
 type Session = { id: string; judgment_id: string | null; started_at: string; ended_at: string | null; duration_minutes: number | null; activity: string };
 type Mock = { id: string; title: string; taken_on: string; max_marks: number; marks_obtained: number | null; subject_id: string | null; notes: string | null };
 
 export default function AorPage() {
-  const [tab, setTab] = useState<"plan" | "checklist" | "judgments" | "calendar" | "mocks" | "import">("plan");
+  const [tab, setTab] = useState<"plan" | "flashcards" | "checklist" | "judgments" | "calendar" | "mocks" | "import">("plan");
   const [sheet, setSheet] = useState<{ open: boolean; j: Partial<Judgment> | null }>({ open: false, j: null });
-  useEffect(() => { if (typeof window !== "undefined" && window.location.hash === "#import") setTab("import"); }, []);
+  useEffect(() => { if (typeof window !== "undefined" && window.location.hash === "#import") setTab("import"); else if (typeof window !== "undefined" && window.location.hash === "#flashcards") setTab("flashcards"); }, []);
 
   const { data, error, loading, reload } = useLive(async () => {
     const since = addDays(dayKey(), -27);
@@ -34,11 +35,12 @@ export default function AorPage() {
   return (
     <>
       <PageHeader title="AOR preparation" subtitle="Advocate-on-Record examination" action={<Button onClick={() => open({ status: "not_started" })}><Plus className="size-4" />Judgment</Button>} />
-      <div className="mb-4"><Segmented value={tab} onChange={setTab} options={[{ value: "plan", label: "Today" }, { value: "checklist", label: "Checklist" }, { value: "judgments", label: "Judgments" }, { value: "calendar", label: "Revision calendar" }, { value: "mocks", label: "Mock tests" }, { value: "import", label: "Import CSV" }]} /></div>
+      <div className="mb-4"><Segmented value={tab} onChange={setTab} options={[{ value: "plan", label: "Today" }, { value: "flashcards", label: "Flashcards" }, { value: "checklist", label: "Checklist" }, { value: "judgments", label: "Judgments" }, { value: "calendar", label: "Revision calendar" }, { value: "mocks", label: "Mock tests" }, { value: "import", label: "Import CSV" }]} /></div>
       {error && <ErrorBox error={error} onRetry={reload} />}
       {loading && !data ? <Spinner /> : data && (
         <>
           {tab === "plan" && <Plan {...data} onOpen={open} reload={reload} />}
+          {tab === "flashcards" && <Flashcards />}
           {tab === "checklist" && <Checklist subjects={data.subjects} judgments={data.judgments} reload={reload} />}
           {tab === "judgments" && <JudgmentList {...data} onOpen={open} />}
           {tab === "calendar" && <Calendar judgments={data.judgments} onOpen={open} reload={reload} />}
